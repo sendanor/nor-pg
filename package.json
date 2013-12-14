@@ -10,6 +10,11 @@
     "type": "git",
     "url": "git://github.com/Sendanor/nor-pg.git"
   },
+  "dependencies": {
+    "pg": "*",
+    "q": "*",
+    "nor-extend": "*"
+  },
   "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
   "license": "MIT",
   "bugs": {
