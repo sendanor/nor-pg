@@ -1,0 +1,18 @@
+{
+  "name": "nor-pg",
+  "version": "0.1.0",
+  "description": "PostgreSQL library with Promises for Node.js",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Sendanor/nor-pg.git"
+  },
+  "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Sendanor/nor-pg/issues"
+  }
+}
