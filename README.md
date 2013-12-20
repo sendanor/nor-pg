@@ -39,7 +39,7 @@ We use [the Q library](https://github.com/kriskowal/q) with
 [nor-extend](https://github.com/Sendanor/nor-extend) to provide chainable 
 extended promises.
 
-These promises are essentially same as Q promises with the exception that you 
+These promises are essentially the same as Q promises with the exception that you 
 can also use methods from this library just like when chaining methods in 
 synchronic code. Just remember to pass on the instance of PostgreSQL in your 
 own promise functions (as you would need to do when chaining in synchronic 
