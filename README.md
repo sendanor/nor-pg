@@ -258,7 +258,7 @@ PostgreSQL.start('postgres://username:password@localhost/dbname').query('SELECT 
 
 ******************************************************************************
 
-### PostgreSQL.scope(where)
+### PostgreSQL.scope([where])
 
 This is a helper function for implementing rollback handler for failed operations.
 
