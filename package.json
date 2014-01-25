@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Sendanor/nor-pg.git"
+    "url": "git://github.com/sendanor/nor-pg.git"
   },
   "dependencies": {
     "pg": "*",
@@ -18,6 +18,6 @@
   "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Sendanor/nor-pg/issues"
+    "url": "https://github.com/sendanor/nor-pg/issues"
   }
 }
