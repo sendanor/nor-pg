@@ -11,9 +11,9 @@
     "url": "git://github.com/sendanor/nor-pg.git"
   },
   "dependencies": {
-    "pg": "*",
-    "q": "*",
-    "nor-extend": "*"
+    "pg": ">= 2.11.1 <2.12.0",
+    "q": ">= 1.0.0 <1.1.0",
+    "nor-extend": ">= 0.1.15 <0.2.0"
   },
   "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
   "license": "MIT",
