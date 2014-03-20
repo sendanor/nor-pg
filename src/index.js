@@ -4,6 +4,7 @@ var util = require('util');
 var Q = require('q');
 var PG = require('pg');
 var extend = require('nor-extend');
+var is = require('nor-is');
 
 /* Bindings */
 var bindings = {};
@@ -41,6 +42,14 @@ PostgreSQL.prototype.connect = function() {
 		self._conn.client = res.client;
 		self._conn.query = Q.nfbind(self._conn.client.query.bind(self._conn.client));
 		self._conn.done = res.done;
+		
+		// Pass NOTIFY to clients
+		if (is.func(self.emit)) {
+			self._conn.client.on('notification', function(msg){
+				self.emit('notification', msg);
+			});
+		}
+		
 		return self;
 	}
 
@@ -109,7 +118,7 @@ PostgreSQL.scope = function(where) {
 		return db;
 	}
 	return inner;
-}
+};
 
 module.exports = PostgreSQL;
 
