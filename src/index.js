@@ -1,5 +1,6 @@
 /** Extended PostgreSQL bindings for pg module */
 
+var debug = require('nor-debug');
 var util = require('util');
 var Q = require('q');
 var PG = require('pg');
@@ -28,6 +29,11 @@ function PostgreSQL(config) {
 }
 util.inherits(PostgreSQL, extend.ActionObject);
 
+/* Event listener */
+function notification_event_listener(self, msg) {
+	self.emit('notification', msg);
+}
+		
 /** Create connection (or take it from the pool) */
 PostgreSQL.prototype.connect = function() {
 	var self = this;
@@ -36,20 +42,22 @@ PostgreSQL.prototype.connect = function() {
 		throw TypeError("Connected already?");
 	}
 
+	self._notification_listener = notification_event_listener.bind(self);
+	debug.assert(self._notification_listener).is('function');
+
 	/** `res` will have properties client and done from pg.connect() */
 	function handle_res(res) {
 		self._conn = {};
 		self._conn.client = res.client;
 		self._conn.query = Q.nfbind(self._conn.client.query.bind(self._conn.client));
 		self._conn.done = res.done;
-		
+
 		// Pass NOTIFY to clients
 		if (is.func(self.emit)) {
-			self._conn.client.on('notification', function(msg){
-				self.emit('notification', msg);
-			});
+			debug.assert(self._notification_listener).is('function');
+			self._conn.client.on('notification', self._notification_listener);
 		}
-		
+
 		return self;
 	}
 
@@ -59,6 +67,10 @@ PostgreSQL.prototype.connect = function() {
 /** Disconnect connection (or actually release it back to pool) */
 PostgreSQL.prototype.disconnect = function() {
 	var self = this;
+	if(is.func(self._notification_listener)) {
+		self._conn.client.removeListener('notification', self._notification_listener);
+		delete self._notification_listener;
+	}
 	self._conn.done();
 	delete self._conn;
 	return self;
