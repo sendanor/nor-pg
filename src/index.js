@@ -39,7 +39,7 @@ PostgreSQL.prototype.connect = function() {
 	var self = this;
 
 	if(self._client || self._close_client) {
-		throw TypeError("Connected already?");
+		throw new TypeError("Connected already?");
 	}
 
 	self._notification_listener = notification_event_listener.bind(self);
@@ -71,8 +71,12 @@ PostgreSQL.prototype.disconnect = function() {
 		self._conn.client.removeListener('notification', self._notification_listener);
 		delete self._notification_listener;
 	}
-	self._conn.done();
-	delete self._conn;
+	if(is.object(self) && is.defined(self._conn)) {
+		self._conn.done();
+		delete self._conn;
+	} else {
+		debug.warn('called on uninitialized connection -- maybe multiple times?');
+	}
 	return self;
 };
 
@@ -82,6 +86,7 @@ extend.ActionObject.setup(PostgreSQL, 'query', function(str, params){
 	function strip_res(result) {
 		return result.rows;
 	}
+	debug.assert(self._conn).is('object');
 	return self._conn.query(str, params).then(strip_res);
 });
 
