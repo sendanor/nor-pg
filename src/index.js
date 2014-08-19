@@ -19,7 +19,7 @@ function module_exists(name) {
 
 /* Newrelic instrumentation */
 var nr;
-if(module_exists("newrelic")) {
+if(module_exists("newrelic") && (!process.env.DISABLE_NEWRELIC)) {
 	debug.info('Enabled newrelic instrumentation for nor-pg.');
 	try {
 		nr = require("newrelic");
