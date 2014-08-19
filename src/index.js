@@ -21,7 +21,12 @@ function module_exists(name) {
 var nr;
 if(module_exists("newrelic")) {
 	debug.info('Enabled newrelic instrumentation for nor-pg.');
-	nr = require("newrelic");
+	try {
+		nr = require("newrelic");
+	} catch(e) {
+		debug.warn('Failed to setup NewRelic support: ' + e);
+		nr = undefined;
+	}
 }
 
 /* Bindings */
