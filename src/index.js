@@ -7,18 +7,42 @@ var PG = require('pg');
 var extend = require('nor-extend');
 var is = require('nor-is');
 
+/** Returns true if module exists */
+function module_exists(name) {
+	try {
+		require.resolve(name);
+		return true;
+	} catch(e) {
+		return false;
+	}
+}
+
+/* Newrelic instrumentation */
+var nr;
+if(module_exists("newrelic")) {
+	debug.info('Enabled newrelic instrumentation for nor-pg.');
+	nr = require("newrelic");
+}
+
 /* Bindings */
 var bindings = {};
 
 /** `pg.connect` bindings */
 bindings.connect = function(config) {
-	var defer = Q.defer();
-	PG.connect(config, function(err, client, done) {
+
+	function catch_results(err, client, done) {
 		if(err) {
 			return defer.reject(err);
 		}
 		defer.resolve({client:client, done:done});
-	});
+	}
+
+	var defer = Q.defer();
+	if(nr) {
+		PG.connect(config, nr.createTracer('nor-pg:connect', catch_results));
+	} else {
+		PG.connect(config, catch_results);
+	}
 	return defer.promise;
 };
 
@@ -33,7 +57,7 @@ util.inherits(PostgreSQL, extend.ActionObject);
 function notification_event_listener(self, msg) {
 	self.emit('notification', msg);
 }
-		
+
 /** Create connection (or take it from the pool) */
 PostgreSQL.prototype.connect = function() {
 	var self = this;
@@ -49,7 +73,26 @@ PostgreSQL.prototype.connect = function() {
 	function handle_res(res) {
 		self._conn = {};
 		self._conn.client = res.client;
-		self._conn.query = Q.nfbind(self._conn.client.query.bind(self._conn.client));
+
+		if(!nr) {
+			self._conn.query = Q.nfbind(self._conn.client.query.bind(self._conn.client));
+		} else {
+			self._conn.query = function wrap_query() {
+				var args = Array.prototype.slice.call(arguments);
+				var defer = Q.defer();
+				self._conn.client.query.apply(self._conn.client, args.concat([
+					nr.createTracer('nor-pg:query', function promise_resolve(err, result) {
+						if(err) {
+							defer.reject(err);
+						} else {
+							defer.resolve(result);
+						}
+					})
+				]));
+				return defer.promise;
+			};
+		}
+
 		self._conn.done = res.done;
 
 		// Pass NOTIFY to clients
@@ -115,7 +158,7 @@ PostgreSQL.start = function(config) {
 };
 
 /** This is a helper function for implementing rollback handler for promise fails.
- * Usage: 
+ * Usage:
  *    var scope = pg.scope();
  *    pg.start(opts.pg).then(pg.scope(scope)).query(...).commit().fail(scope.rollback)
  */
