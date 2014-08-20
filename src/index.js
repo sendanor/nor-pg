@@ -1,4 +1,5 @@
 /** Extended PostgreSQL bindings for pg module */
+"use strict";
 
 var debug = require('nor-debug');
 var util = require('util');
@@ -34,6 +35,7 @@ var bindings = {};
 
 /** `pg.connect` bindings */
 bindings.connect = function(config) {
+	var defer = Q.defer();
 
 	function catch_results(err, client, done) {
 		if(err) {
@@ -42,7 +44,6 @@ bindings.connect = function(config) {
 		defer.resolve({client:client, done:done});
 	}
 
-	var defer = Q.defer();
 	if(nr) {
 		PG.connect(config, nr.createTracer('nor-pg:connect', catch_results));
 	} else {
