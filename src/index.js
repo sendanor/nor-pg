@@ -20,10 +20,10 @@ function module_exists(name) {
 
 /* Newrelic instrumentation */
 var nr;
-if(module_exists("newrelic") && (!process.env.DISABLE_NEWRELIC)) {
-	debug.info('Enabled newrelic instrumentation for nor-pg.');
+if(module_exists("newrelic") && (process.env.DISABLE_NEWRELIC === undefined)) {
 	try {
 		nr = require("newrelic");
+		debug.info('Enabled newrelic instrumentation for nor-pg.');
 	} catch(e) {
 		debug.warn('Failed to setup NewRelic support: ' + e);
 		nr = undefined;
@@ -33,22 +33,25 @@ if(module_exists("newrelic") && (!process.env.DISABLE_NEWRELIC)) {
 /* Bindings */
 var bindings = {};
 
+function catch_results(defer, err, client, done) {
+	if(err) {
+		return defer.reject(err);
+	}
+	defer.resolve({"client":client, "done":done});
+}
+
+/** */
+function get_connect_callback(defer) {
+	if(nr) {
+		return nr.createTracer('nor-pg:connect', catch_results.bind(undefined, defer));
+	}
+	return catch_results.bind(undefined, defer);
+}
+
 /** `pg.connect` bindings */
 bindings.connect = function(config) {
 	var defer = Q.defer();
-
-	function catch_results(err, client, done) {
-		if(err) {
-			return defer.reject(err);
-		}
-		defer.resolve({client:client, done:done});
-	}
-
-	if(nr) {
-		PG.connect(config, nr.createTracer('nor-pg:connect', catch_results));
-	} else {
-		PG.connect(config, catch_results);
-	}
+	PG.connect(config, get_connect_callback(defer) );
 	return defer.promise;
 };
 
@@ -64,6 +67,47 @@ function notification_event_listener(self, msg) {
 	self.emit('notification', msg);
 }
 
+/** Resolve a promise */
+function promise_resolve(defer, err, result) {
+	if(err) {
+		defer.reject(err);
+		return;
+	}
+
+	defer.resolve(result);
+}
+
+/** Wrap the query with `nr.createTracer()` */
+function wrap_nr_query(client) {
+	var args = Array.prototype.slice.call(arguments);
+	var defer = Q.defer();
+	args.push(nr.createTracer('nor-pg:query', promise_resolve.bind(undefined, defer) ));
+	client.query.apply(client, args);
+	return defer.promise;
+}
+
+/** `res` will have properties client and done from pg.connect() */
+function handle_res(self, res) {
+
+	var client = res.client;
+
+	var conn = {
+		"query": (!nr) ? Q.nfbind(client.query.bind(client)) : wrap_nr_query.bind(undefined, client),
+		"done": res.done,
+		"client": client
+	};
+
+	self._conn = conn;
+
+	// Pass NOTIFY to clients
+	if (is.func(self.emit)) {
+		debug.assert(self._notification_listener).is('function');
+		client.on('notification', self._notification_listener);
+	}
+
+	return self;
+}
+
 /** Create connection (or take it from the pool) */
 PostgreSQL.prototype.connect = function() {
 	var self = this;
@@ -72,71 +116,45 @@ PostgreSQL.prototype.connect = function() {
 		throw new TypeError("Connected already?");
 	}
 
-	self._notification_listener = notification_event_listener.bind(self);
+	self._notification_listener = notification_event_listener.bind(undefined, self);
 	debug.assert(self._notification_listener).is('function');
 
-	/** `res` will have properties client and done from pg.connect() */
-	function handle_res(res) {
-		self._conn = {};
-		self._conn.client = res.client;
-
-		if(!nr) {
-			self._conn.query = Q.nfbind(self._conn.client.query.bind(self._conn.client));
-		} else {
-			self._conn.query = function wrap_query() {
-				var args = Array.prototype.slice.call(arguments);
-				var defer = Q.defer();
-				self._conn.client.query.apply(self._conn.client, args.concat([
-					nr.createTracer('nor-pg:query', function promise_resolve(err, result) {
-						if(err) {
-							defer.reject(err);
-						} else {
-							defer.resolve(result);
-						}
-					})
-				]));
-				return defer.promise;
-			};
-		}
-
-		self._conn.done = res.done;
-
-		// Pass NOTIFY to clients
-		if (is.func(self.emit)) {
-			debug.assert(self._notification_listener).is('function');
-			self._conn.client.on('notification', self._notification_listener);
-		}
-
-		return self;
-	}
-
-	return extend.promise([PostgreSQL], bindings.connect(this.config).then(handle_res));
+	return extend.promise([PostgreSQL], bindings.connect(this.config).then(handle_res.bind(undefined, self)));
 };
 
 /** Disconnect connection (or actually release it back to pool) */
 PostgreSQL.prototype.disconnect = function() {
 	var self = this;
-	if(is.func(self._notification_listener)) {
-		self._conn.client.removeListener('notification', self._notification_listener);
+	var conn = self._conn;
+	var client = conn.client;
+	var listener = self._notification_listener;
+
+	if(is.func(listener)) {
+		client.removeListener('notification', listener);
 		delete self._notification_listener;
 	}
-	if(is.object(self) && is.defined(self._conn)) {
-		self._conn.done();
+
+	if(is.defined(conn)) {
+		conn.done();
 		delete self._conn;
 	} else {
 		debug.warn('called on uninitialized connection -- maybe multiple times?');
 	}
+
 	return self;
 };
+
+/** Returns value of property `rows` from `result` */
+function strip_res(result) {
+	return result.rows;
+}
 
 /** Internal query transaction */
 extend.ActionObject.setup(PostgreSQL, 'query', function(str, params){
 	var self = this;
-	function strip_res(result) {
-		return result.rows;
-	}
-	debug.assert(self._conn).is('object');
-	return self._conn.query(str, params).then(strip_res);
+	var conn = self._conn;
+	debug.assert(conn).is('object');
+	return conn.query(str, params).then(strip_res);
 });
 
 /** Start transaction */
