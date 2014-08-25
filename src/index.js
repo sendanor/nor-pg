@@ -14,7 +14,6 @@ var NEW_RELIC_ENABLED = ((''+process.env.NEW_RELIC_ENABLED).toUpperCase() === 'T
 var nr;
 if(NEW_RELIC_ENABLED) {
 	nr = require('nor-newrelic/src/nr');
-	if(nr && nr.nr) { nr = nr.nr; }
 }
 
 /* Bindings */
@@ -30,7 +29,7 @@ function catch_results(defer, err, client, done) {
 /** */
 function get_connect_callback(defer) {
 	if(nr) {
-		return nr.createTracer('nor-pg:connect', catch_results.bind(undefined, defer));
+		return nr.nr.createTracer('nor-pg:connect', catch_results.bind(undefined, defer));
 	}
 	return catch_results.bind(undefined, defer);
 }
@@ -68,7 +67,7 @@ function promise_resolve(defer, err, result) {
 function wrap_nr_query(client) {
 	var args = Array.prototype.slice.call(arguments);
 	var defer = Q.defer();
-	args.push(nr.createTracer('nor-pg:query', promise_resolve.bind(undefined, defer) ));
+	args.push(nr.nr.createTracer('nor-pg:query', promise_resolve.bind(undefined, defer) ));
 	client.query.apply(client, args);
 	return defer.promise;
 }
