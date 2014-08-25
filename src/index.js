@@ -9,35 +9,26 @@ var extend = require('nor-extend');
 var is = require('nor-is');
 
 /* Optional newrelic instrumentation support */
-
-var NEW_RELIC_ENABLED = ((''+process.env.NEW_RELIC_ENABLED).toUpperCase() === 'TRUE') ? true : false;
-var nr;
-if(NEW_RELIC_ENABLED) {
-	nr = require('nor-newrelic/src/nr');
-}
+var nr_fcall = require('nor-newrelic/src/fcall.js');
+var nr_nfbind = require('nor-newrelic/src/nfbind.js');
 
 /* Bindings */
 var bindings = {};
 
+/** Handle `PG.connect()` callback results using defered object */
 function catch_results(defer, err, client, done) {
+	//debug.log('catch_results()...');
 	if(err) {
 		return defer.reject(err);
 	}
 	defer.resolve({"client":client, "done":done});
 }
 
-/** */
-function get_connect_callback(defer) {
-	if(nr) {
-		return nr.nr.createTracer('nor-pg:connect', catch_results.bind(undefined, defer));
-	}
-	return catch_results.bind(undefined, defer);
-}
-
 /** `pg.connect` bindings */
 bindings.connect = function(config) {
 	var defer = Q.defer();
-	PG.connect(config, get_connect_callback(defer) );
+	//debug.log('PG.connect()...');
+	PG.connect(config, catch_results.bind(undefined, defer) );
 	return defer.promise;
 };
 
@@ -54,6 +45,7 @@ function notification_event_listener(self, msg) {
 }
 
 /** Resolve a promise */
+/*
 function promise_resolve(defer, err, result) {
 	if(err) {
 		defer.reject(err);
@@ -62,23 +54,23 @@ function promise_resolve(defer, err, result) {
 
 	defer.resolve(result);
 }
-
-/** Wrap the query with `nr.createTracer()` */
-function wrap_nr_query(client) {
-	var args = Array.prototype.slice.call(arguments);
-	var defer = Q.defer();
-	args.push(nr.nr.createTracer('nor-pg:query', promise_resolve.bind(undefined, defer) ));
-	client.query.apply(client, args);
-	return defer.promise;
-}
+*/
 
 /** `res` will have properties client and done from pg.connect() */
 function handle_res(self, res) {
+	//debug.log('handle_res()...');
+
+	debug.assert(self).is('object');
+	debug.assert(res).is('object');
+	debug.assert(res.client).is('object');
 
 	var client = res.client;
 
+	debug.assert(client.query).is('function');
+
 	var conn = {
-		"query": (!nr) ? Q.nfbind(client.query.bind(client)) : wrap_nr_query.bind(undefined, client),
+		//"query": nr_nfbind("nor-pg:query", client.query.bind(client)),
+		"query": nr_nfbind("nor-pg:query", client.query.bind(client)),
 		"done": res.done,
 		"client": client
 	};
@@ -96,6 +88,7 @@ function handle_res(self, res) {
 
 /** Create connection (or take it from the pool) */
 PostgreSQL.prototype.connect = function() {
+	//debug.log('.connect()...');
 	var self = this;
 
 	if(self._client || self._close_client) {
@@ -105,7 +98,9 @@ PostgreSQL.prototype.connect = function() {
 	self._notification_listener = notification_event_listener.bind(undefined, self);
 	debug.assert(self._notification_listener).is('function');
 
-	return extend.promise([PostgreSQL], bindings.connect(this.config).then(handle_res.bind(undefined, self)));
+	return extend.promise([PostgreSQL], nr_fcall('nor-pg:connect', function() {
+		return bindings.connect(self.config).then(handle_res.bind(undefined, self));
+	}));
 };
 
 /** Disconnect connection (or actually release it back to pool) */

@@ -8,7 +8,7 @@
         "pretty": true,
         "colors": true //'auto', true, false
     },
-    
+
     //===========Parser============
     "parser": {
         //"adsafe": false, // if ADsafe should be enforced
@@ -20,7 +20,7 @@
         //"devel": false, // if logging should be allowed (console, alert, etc.)
         //"eqeqeq": true, // if === should be required
         //"es5": true, // if ES5 syntax should be allowed
-        "evil": true, // if eval should be allowed
+        ////"evil": true, // if eval should be allowed
         //"forin": false, // if for in statements must filter
         //"fragment": false, // if HTML fragments should be allowed
         //"immed": true, // if immediate invocations must be wrapped in parens
@@ -41,9 +41,9 @@
         //"white": true, // if strict whitespace rules apply
         //"widget": false, // if the Yahoo Widgets globals should be predefined
         //"indent": 4, // set the expected indentation level
-        
+
         // the names of predefined global variables: the following are defined by nodejs itself
-        "predef": ["exports", "module", "require", "process", "__filename", "__dirname", "global", "console", "setInterval", "setTimeout", "clearInterval", "clearTimeout", "plv8"],
+        //"predef": ["exports", "module", "require", "process", "__filename", "__dirname", "global", "console", "setInterval", "setTimeout", "clearInterval", "clearTimeout"],
 
         "nodejs": true
     }
