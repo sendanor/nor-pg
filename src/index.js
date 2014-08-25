@@ -8,26 +8,13 @@ var PG = require('pg');
 var extend = require('nor-extend');
 var is = require('nor-is');
 
-/** Returns true if module exists */
-function module_exists(name) {
-	try {
-		require.resolve(name);
-		return true;
-	} catch(e) {
-		return false;
-	}
-}
+/* Optional newrelic instrumentation support */
 
-/* Newrelic instrumentation */
+var NEW_RELIC_ENABLED = ((''+process.env.NEW_RELIC_ENABLED).toUpperCase() === 'TRUE') ? true : false;
 var nr;
-if(module_exists("newrelic") && (process.env.DISABLE_NEWRELIC === undefined)) {
-	try {
-		nr = require("newrelic");
-		debug.info('Enabled newrelic instrumentation for nor-pg.');
-	} catch(e) {
-		debug.warn('Failed to setup NewRelic support: ' + e);
-		nr = undefined;
-	}
+if(NEW_RELIC_ENABLED) {
+	nr = require('nor-newrelic/src/nr');
+	if(nr && nr.nr) { nr = nr.nr; }
 }
 
 /* Bindings */
