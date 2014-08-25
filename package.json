@@ -1,6 +1,6 @@
 {
   "name": "nor-pg",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "PostgreSQL library with Promises for Node.js",
   "main": "src/index.js",
   "scripts": {
