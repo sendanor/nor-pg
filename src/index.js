@@ -2,6 +2,7 @@
 "use strict";
 
 var debug = require('nor-debug');
+var FUNCTION = require('nor-function');
 var util = require('util');
 var Q = require('q');
 var PG = require('pg');
@@ -28,7 +29,7 @@ function catch_results(defer, err, client, done) {
 bindings.connect = function(config) {
 	var defer = Q.defer();
 	//debug.log('PG.connect()...');
-	PG.connect(config, catch_results.bind(undefined, defer) );
+	PG.connect(config, FUNCTION(catch_results).curry(defer) );
 	return defer.promise;
 };
 
@@ -69,8 +70,7 @@ function handle_res(self, res) {
 	debug.assert(client.query).is('function');
 
 	var conn = {
-		//"query": nr_nfbind("nor-pg:query", client.query.bind(client)),
-		"query": nr_nfbind("nor-pg:query", client.query.bind(client)),
+		"query": nr_nfbind("nor-pg:query", FUNCTION(client.query).bind(client)),
 		"done": res.done,
 		"client": client
 	};
@@ -95,11 +95,11 @@ PostgreSQL.prototype.connect = function() {
 		throw new TypeError("Connected already?");
 	}
 
-	self._notification_listener = notification_event_listener.bind(undefined, self);
+	self._notification_listener = FUNCTION(notification_event_listener).curry(self);
 	debug.assert(self._notification_listener).is('function');
 
 	return extend.promise([PostgreSQL], nr_fcall('nor-pg:connect', function() {
-		return bindings.connect(self.config).then(handle_res.bind(undefined, self));
+		return bindings.connect(self.config).then(FUNCTION(handle_res).curry(self));
 	}));
 };
 
