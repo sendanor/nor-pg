@@ -268,3 +268,8 @@ pg.start(opts.pg).then(pg.scope(scope)).query('...').then(...).commit().fail(sco
 ```
 
 ******************************************************************************
+
+Commercial Support
+------------------
+
+You can buy commercial support from [Sendanor](http://sendanor.com/software).
