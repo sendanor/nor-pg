@@ -16,6 +16,10 @@ var nr_nfbind = require('nor-newrelic/src/nfbind.js');
 /* Bindings */
 var bindings = {};
 
+/* Pool size */
+var NOR_PG_POOL_SIZE = process.env.NOR_PG_POOL_SIZE ? parseInt(process.env.NOR_PG_POOL_SIZE, 10) : 10;
+PG.defaults.poolSize = NOR_PG_POOL_SIZE;
+
 /** Handle `PG.connect()` callback results using defered object */
 function catch_results(defer, err, client, done) {
 	//debug.log('catch_results()...');
