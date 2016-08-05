@@ -138,6 +138,9 @@ function strip_res(result) {
 extend.ActionObject.setup(PostgreSQL, 'query', function(str, params){
 	var self = this;
 	var conn = self._conn;
+	if(conn === undefined) {
+		throw new TypeError("Disconnected from PostgreSQL");
+	}
 	debug.assert(conn).is('object');
 	return conn.query(str, params).then(strip_res);
 });
