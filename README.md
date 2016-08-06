@@ -26,6 +26,51 @@ You can install the module from NPM: `npm install nor-pg`
 var PostgreSQL = require('nor-pg');
 ```
 
+Events usage example
+--------------------
+
+`nor-pg` also implements PostgreSQL's `NOTIFY` and `LISTEN` with a familiar 
+looking Node.js interface.
+
+You can listen your events through PostgreSQL server like this:
+
+```javascript
+pg.connect(PGCONFIG).then(function(db) {
+	return db.on('test', function(a, b, c) {
+		debug.log(
+			'test payload: \n',
+			' a = ', a, '\n',
+			' b = ', b, '\n',
+			' c = ', c
+		);
+	});
+});
+```
+
+...and emit events like this:
+
+```javascript
+pg.connect(PGCONFIG).then(function(db) {
+	return db.emit('test', {"foo":"bar"}, ["hello", "world"], 1234).then(function() {
+		return db.disconnect();
+	});
+});
+```
+
+* `.emit(event_name, ...)` will encode arguments as JSON payload and execute 
+  `NOTIFY event_name, payload`
+
+* `.on(event_name, listener)` and `.once(event_name, listener)` will start 
+  `LISTEN event_name` and when PostgreSQL notifies, parses the payload (as JSON 
+  array) as arguments for the listener and calls it.
+
+***Please note:*** Our interface is not exactly standard interface. Our methods 
+will return promises, so you can and should catch possible errors.
+
+You should not use anything other than standard `[a-z][a-z0-9_]*` as event 
+names. We use or might use internally events starting with `$` and `_`, so 
+especially not those!
+
 Reference
 ---------
 
