@@ -13,20 +13,21 @@
     "url": "git://github.com/sendanor/nor-pg.git"
   },
   "dependencies": {
-    "pg"           : "^3.4.1",
-    "q"            : "^1.0.1",
-    "nor-function" : "^1.0.0",
-    "nor-extend"   : "^1.0.0",
-    "nor-debug"    : "^1.0.0",
-    "nor-newrelic" : "^1.0.0",
-    "nor-is"       : "^1.0.0"
+    "nor-debug": "^1.0.0",
+    "nor-extend": "^1.0.0",
+    "nor-function": "^1.0.0",
+    "nor-is": "^1.0.0",
+    "nor-newrelic": "^1.0.0",
+    "pg": "^3.4.1",
+    "pg-escape": "^0.2.0",
+    "q": "^1.0.1"
   },
   "optionalDependencies": {
-    "newrelic"   : "^1.11.0"
+    "newrelic": "^1.11.0"
   },
   "devDependencies": {
-    "lint"         : "^1.1.2",
-    "jshint"       : "^2.9.2"
+    "lint": "^1.1.2",
+    "jshint": "^2.9.2"
   },
   "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
   "license": "MIT",
