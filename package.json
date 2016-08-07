@@ -1,6 +1,6 @@
 {
   "name": "nor-pg",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "PostgreSQL library with Promises for Node.js",
   "main": "src/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "nor-debug": "^1.0.0",
-    "nor-extend": "^1.0.0",
+    "nor-extend": "^1.1.0",
     "nor-function": "^1.0.0",
     "nor-is": "^1.0.0",
     "nor-newrelic": "^1.0.0",
