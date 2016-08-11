@@ -57,7 +57,8 @@ util.inherits(PostgreSQL, ActionObjectNoEvents);
 		var name = args[0];
 		if(name && (name.charAt(0) === '$')) {
 			//debug.log('name =', name, ', args=', args);
-			return self._events[fn].apply(self, args);
+			self._events[fn].apply(self, args);
+			return self;
 		}
 		//debug.log('name =', name, ', args=', args);
 		return self['_'+fn].apply(self, args);
@@ -283,21 +284,21 @@ PostgreSQL.prototype.rollback = function() {
 
 /** Listen a channel */
 PostgreSQL.prototype.listen = function(channel) {
-	debug.assert(channel).is('string').pattern(/^[a-z][a-z0-9_]*$/);
+	debug.assert(channel).is('string').pattern(/^[a-zA-Z][a-zA-Z0-9_]*$/);
 	var self = this;
 	return self._query(pg_escape('LISTEN %I', channel)).then(function() { return self; });
 };
 
 /** Stop listening a channel */
 PostgreSQL.prototype.unlisten = function(channel) {
-	debug.assert(channel).is('string').pattern(/^[a-z][a-z0-9_]*$/);
+	debug.assert(channel).is('string').pattern(/^[a-zA-Z][a-zA-Z0-9_]*$/);
 	var self = this;
 	return self._query(pg_escape('UNLISTEN %I', channel)).then(function() { return self; });
 };
 
 /** Notify a channel */
 PostgreSQL.prototype.notify = function(channel, payload) {
-	debug.assert(channel).is('string').pattern(/^[a-z][a-z0-9_]*$/);
+	debug.assert(channel).is('string').pattern(/^[a-zA-Z][a-zA-Z0-9_]*$/);
 	var self = this;
 	if(payload !== undefined) {
 		return self._query(pg_escape('NOTIFY %I, %L', channel, payload)).then(function() { return self; });
