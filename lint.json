@@ -2,6 +2,8 @@
 //    Default Configuration
 //=============================
 {
+    "esversion": 6,
+
     //===========Formatter============
     "formatter": {
         "type": "cli", //xml, json, vim, textmate
