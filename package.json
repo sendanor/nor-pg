@@ -1,37 +1,47 @@
 {
   "name": "nor-pg",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "PostgreSQL library with Promises for Node.js",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "node-lint src/ --config=lint.json",
-    "jshint": "jshint src/"
+    "compile-watch": "babel --watch -d dist/ src/",
+    "compile": "babel -d dist/ src/",
+    "prepare": "npm run -s compile",
+    "pretest": "npm run -s compile",
+    "test": "mocha --require @babel/register test/unit/**/*.spec.js",
+    "preversion": "npm test",
+    "postversion": "git push && git push --tags",
+    "jshint": "jshint src/",
+    "lint": "node-lint src/ --config=lint.json"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/sendanor/nor-pg.git"
   },
   "dependencies": {
-    "nor-debug": "^1.0.0",
-    "nor-extend": "^1.1.0",
-    "nor-function": "^1.0.0",
-    "nor-is": "^1.0.0",
-    "nor-newrelic": "^1.0.0",
-    "pg": "^4.5.5",
-    "pg-escape": "^0.2.0",
-    "q": "^1.0.1"
-  },
-  "optionalDependencies": {
-    "newrelic": "^1.11.0"
+    "@norjs/debug": "^1.3.0",
+    "@norjs/is": "^1.3.0",
+    "nor-extend": "^1.3.2",
+    "pg": "^7.7.1",
+    "pg-escape": "^0.2.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "@babel/register": "^7.0.0",
+    "jshint": "^2.9.2",
     "lint": "^1.1.2",
-    "jshint": "^2.9.2"
+    "mocha": "^5.0.4",
+    "mocha-lcov-reporter": "^1.3.0",
+    "nor-pgrunner": "^1.3.1"
   },
   "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/sendanor/nor-pg/issues"
+  },
+  "engines": {
+    "node": ">=4"
   }
 }
